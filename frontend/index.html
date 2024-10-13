@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Library</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+        }
+        .book-list {
+            margin: 20px 0;
+        }
+        .book-item {
+            background-color: #fff;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+        }
+        .book-form {
+            margin: 20px 0;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ccc;
+        }
+        .book-form input, .book-form button {
+            margin: 5px 0;
+        }
+        button {
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Book Library</h1>
+
+    <div class="book-list" id="bookList"></div>
+
+    <div class="book-form">
+        <h3>Add a new book</h3>
+        <input type="text" id="title" placeholder="Book Title">
+        <input type="text" id="author" placeholder="Book Author">
+        <button onclick="addBook()">Add Book</button>
+    </div>
+
+    <script>
+        function getBooks() {
+            fetch('http://127.0.0.1:5000/books')
+                .then(response => response.json())
+                .then(data => {
+                    const bookList = document.getElementById('bookList');
+                    bookList.innerHTML = '';
+
+                    data.forEach(book => {
+                        const bookItem = document.createElement('div');
+                        bookItem.className = 'book-item';
+                        bookItem.innerHTML = `
+                            <h4>${book.title} by ${book.author}</h4>
+                            <button onclick="deleteBook(${book.id})">Delete</button>
+                            <button onclick="updateBook(${book.id})">Update</button>
+                        `;
+                        bookList.appendChild(bookItem);
+                    });
+                });
+        }
+
+        function addBook() {
+            const title = document.getElementById('title').value;
+            const author = document.getElementById('author').value;
+
+            if (!title || !author) {
+                alert("Please fill out both fields");
+                return;
+            }
+
+            const newBook = {
+                title: title,
+                author: author
+            };
+
+            fetch('http://127.0.0.1:5000/books', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newBook)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Book added!');
+                getBooks();
+                document.getElementById('title').value = '';
+                document.getElementById('author').value = '';
+            });
+        }
+
+        function deleteBook(id) {
+            fetch(`http://127.0.0.1:5000/books/${id}`, {
+                method: 'DELETE'
+            })
+            .then(() => {
+                alert('Book deleted!');
+                getBooks();
+            });
+        }
+
+        function updateBook(id) {
+            const newTitle = prompt("Enter new title:");
+            const newAuthor = prompt("Enter new author:");
+
+            if (!newTitle || !newAuthor) {
+                alert("Please provide both title and author");
+                return;
+            }
+
+            const updatedBook = {
+                title: newTitle,
+                author: newAuthor
+            };
+
+            fetch(`http://127.0.0.1:5000/books/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedBook)
+            })
+            .then(response => response.json())
+            .then(() => {
+                alert('Book updated!');
+                getBooks();
+            });
+        }
+
+        window.onload = function() {
+            getBooks();
+        };
+    </script>
+
+</body>
+</html>
